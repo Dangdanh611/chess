@@ -1,0 +1,1951 @@
+<!-- ==========================================
+     TRANSLATE WIDGET - Dịch Ngôn Ngữ Popup
+     Thêm đoạn code này vào trước thẻ </body>
+     ========================================== -->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+  #tw-root * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* --- Floating Button --- */
+  #tw-fab {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 99999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    box-shadow: 0 4px 20px rgba(26,115,232,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s;
+    outline: none;
+  }
+  #tw-fab:hover {
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 6px 28px rgba(26,115,232,0.6);
+  }
+  #tw-fab svg { width: 26px; height: 26px; fill: #fff; transition: transform 0.3s; }
+  #tw-fab.active { background: linear-gradient(135deg, #0d47a1, #1a73e8); }
+  #tw-fab.active svg { transform: rotate(180deg); }
+
+  /* Pulse ring */
+  #tw-fab::after {
+    content: '';
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(26,115,232,0.5);
+    animation: tw-pulse 2s ease-out infinite;
+  }
+  @keyframes tw-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+
+  /* --- Popup Panel --- */
+  #tw-panel {
+    position: fixed;
+    bottom: 96px;
+    right: 28px;
+    z-index: 99998;
+    width: 340px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow: hidden;
+    transform: scale(0.85) translateY(20px);
+    transform-origin: bottom right;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.25s ease;
+  }
+  #tw-panel.open {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* Header */
+  #tw-header {
+    background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+    padding: 18px 20px 14px;
+    color: #fff;
+  }
+  #tw-header-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  #tw-header-top svg { width: 22px; height: 22px; fill: rgba(255,255,255,0.9); flex-shrink: 0; }
+  #tw-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: #fff;
+  }
+  #tw-subtitle {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.72);
+    padding-left: 32px;
+    line-height: 1.4;
+  }
+
+  /* Body */
+  #tw-body { padding: 16px 18px 18px; }
+
+  /* Lang row */
+  .tw-lang-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .tw-lang-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .tw-lang-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #9aa0a6;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .tw-lang-select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #202124;
+    background: #f8f9fa;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='%239aa0a6'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  .tw-lang-select:focus { border-color: #1a73e8; background: #fff; }
+
+  /* Swap button */
+  #tw-swap {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1.5px solid #e0e0e0;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 18px;
+    transition: background 0.2s, border-color 0.2s, transform 0.3s;
+    outline: none;
+  }
+  #tw-swap:hover { background: #e8f0fe; border-color: #1a73e8; transform: rotate(180deg); }
+  #tw-swap svg { width: 16px; height: 16px; fill: #5f6368; }
+  #tw-swap:hover svg { fill: #1a73e8; }
+
+  /* Translate button */
+  #tw-translate-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #1a73e8, #1557b0);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.15s;
+    outline: none;
+    letter-spacing: -0.1px;
+  }
+  #tw-translate-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  #tw-translate-btn:active { transform: translateY(0); opacity: 1; }
+  #tw-translate-btn svg { width: 18px; height: 18px; fill: #fff; }
+
+  /* Status bar */
+  #tw-status {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+  }
+  #tw-status.info { background: #e8f0fe; color: #1a73e8; display: flex; }
+  #tw-status.success { background: #e6f4ea; color: #137333; display: flex; }
+  #tw-status.error { background: #fce8e6; color: #c5221f; display: flex; }
+  #tw-status.loading { background: #f1f3f4; color: #5f6368; display: flex; }
+
+  /* Restore button */
+  #tw-restore-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 9px;
+    background: transparent;
+    color: #5f6368;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+    outline: none;
+  }
+  #tw-restore-btn:hover { background: #f1f3f4; border-color: #bdc1c6; color: #202124; }
+  #tw-restore-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+  /* Spinner */
+  .tw-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(26,115,232,0.3);
+    border-top-color: #1a73e8;
+    border-radius: 50%;
+    animation: tw-spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes tw-spin { to { transform: rotate(360deg); } }
+
+  /* Divider */
+  .tw-divider {
+    height: 1px;
+    background: #f1f3f4;
+    margin: 14px 0;
+  }
+
+  /* Footer */
+  #tw-footer {
+    padding: 0 18px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: #9aa0a6;
+    font-size: 11px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  #tw-footer svg { width: 13px; height: 13px; fill: #9aa0a6; }
+
+  /* Dark overlay on mobile */
+  @media (max-width: 400px) {
+    #tw-panel { width: calc(100vw - 32px); right: 16px; bottom: 84px; }
+    #tw-fab { right: 16px; bottom: 16px; }
+  }
+</style>
+
+<div id="tw-root">
+  <!-- FAB Button -->
+  <button id="tw-fab" title="Dịch trang">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+    </svg>
+  </button>
+
+  <!-- Popup Panel -->
+  <div id="tw-panel">
+    <!-- Header -->
+    <div id="tw-header">
+      <div id="tw-header-top">
+        <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+        <span id="tw-title">Dịch Trang</span>
+      </div>
+      <div id="tw-subtitle">Dịch nội dung trang sang ngôn ngữ khác</div>
+    </div>
+
+    <!-- Body -->
+    <div id="tw-body">
+      <div class="tw-lang-row">
+        <div class="tw-lang-box">
+          <span class="tw-lang-label">Ngôn ngữ gốc</span>
+          <select class="tw-lang-select" id="tw-src-lang">
+            <option value="auto">🌐 Tự động nhận diện</option>
+            <option value="vi" selected>🇻🇳 Tiếng Việt</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="zh-CN">🇨🇳 中文 (Giản thể)</option>
+            <option value="zh-TW">🇹🇼 中文 (Phồn thể)</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="ko">🇰🇷 한국어</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="pt">🇵🇹 Português</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="th">🇹🇭 ภาษาไทย</option>
+            <option value="id">🇮🇩 Bahasa Indonesia</option>
+          </select>
+        </div>
+
+        <button id="tw-swap" title="Hoán đổi ngôn ngữ">
+          <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+        </button>
+
+        <div class="tw-lang-box">
+          <span class="tw-lang-label">Dịch sang</span>
+          <select class="tw-lang-select" id="tw-dest-lang">
+            <option value="en" selected>🇺🇸 English</option>
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="zh-CN">🇨🇳 中文 (Giản thể)</option>
+            <option value="zh-TW">🇹🇼 中文 (Phồn thể)</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="ko">🇰🇷 한국어</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="pt">🇵🇹 Português</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="th">🇹🇭 ภาษาไทย</option>
+            <option value="id">🇮🇩 Bahasa Indonesia</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="tw-translate-btn">
+        <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+        Dịch trang ngay
+      </button>
+
+      <div id="tw-status"></div>
+
+      <button id="tw-restore-btn">
+        <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7v4l5-5-5-5v4z"/></svg>
+        Khôi phục bản gốc
+      </button>
+    </div>
+
+    <div class="tw-divider"></div>
+
+    <div id="tw-footer">
+      <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+      Hỗ trợ bởi Google Translate
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const fab = document.getElementById('tw-fab');
+  const panel = document.getElementById('tw-panel');
+  const translateBtn = document.getElementById('tw-translate-btn');
+  const restoreBtn = document.getElementById('tw-restore-btn');
+  const statusEl = document.getElementById('tw-status');
+  const srcLang = document.getElementById('tw-src-lang');
+  const destLang = document.getElementById('tw-dest-lang');
+  const swapBtn = document.getElementById('tw-swap');
+
+  let isTranslated = false;
+  let originalTexts = []; // { node, original }
+  let isLoading = false;
+
+  // === Toggle panel ===
+  fab.addEventListener('click', () => {
+    const isOpen = panel.classList.contains('open');
+    panel.classList.toggle('open');
+    fab.classList.toggle('active');
+    if (!isOpen) setStatus('info', '🌐 Chọn ngôn ngữ và nhấn Dịch trang ngay');
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('tw-root').contains(e.target)) {
+      panel.classList.remove('open');
+      fab.classList.remove('active');
+    }
+  });
+
+  // === Swap languages ===
+  swapBtn.addEventListener('click', () => {
+    const s = srcLang.value === 'auto' ? destLang.value : srcLang.value;
+    const d = srcLang.value === 'auto' ? 'vi' : destLang.value;
+    // Only swap if src is not auto
+    if (srcLang.value !== 'auto') {
+      const tmp = srcLang.value;
+      srcLang.value = destLang.value;
+      destLang.value = tmp;
+    }
+  });
+
+  // === Status helper ===
+  function setStatus(type, msg, spinner = false) {
+    statusEl.className = 'tw-status ' + type;
+    statusEl.innerHTML = spinner
+      ? `<div class="tw-spinner"></div><span>${msg}</span>`
+      : `<span>${msg}</span>`;
+    statusEl.style.display = 'flex';
+  }
+  function hideStatus() { statusEl.style.display = 'none'; }
+
+  // === Get all visible text nodes ===
+  function getTextNodes(root) {
+    const walker = document.createTreeWalker(
+      root,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          const tag = parent.tagName.toUpperCase();
+          // Skip script, style, noscript, tw-root
+          if (['SCRIPT','STYLE','NOSCRIPT','TEXTAREA','INPUT'].includes(tag)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('#tw-root')) return NodeFilter.FILTER_REJECT;
+          if (node.textContent.trim().length < 2) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    return nodes;
+  }
+
+  // === Chunk array ===
+  function chunk(arr, size) {
+    const res = [];
+    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+    return res;
+  }
+
+  // === Translate a batch of texts via Google Translate (no key needed) ===
+  async function translateTexts(texts, src, dest) {
+    const joined = texts.join('\n\n||||\n\n');
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${src}&tl=${dest}&dt=t&q=${encodeURIComponent(joined)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Lỗi kết nối API dịch');
+    const data = await res.json();
+    // Parse result
+    const translated = data[0].map(item => item[0]).join('');
+    return translated.split('\n\n||||\n\n');
+  }
+
+  // === Main translate ===
+  translateBtn.addEventListener('click', async () => {
+    if (isLoading) return;
+
+    const dest = destLang.value;
+    const src = srcLang.value;
+
+    if (src !== 'auto' && src === dest) {
+      setStatus('error', '⚠️ Ngôn ngữ gốc và đích không được giống nhau!');
+      return;
+    }
+
+    // Restore if already translated
+    if (isTranslated) restoreOriginal();
+
+    isLoading = true;
+    translateBtn.disabled = true;
+    setStatus('loading', 'Đang thu thập nội dung...', true);
+
+    try {
+      const textNodes = getTextNodes(document.body);
+      if (textNodes.length === 0) throw new Error('Không tìm thấy nội dung để dịch');
+
+      originalTexts = textNodes.map(n => ({ node: n, original: n.textContent }));
+      const texts = originalTexts.map(t => t.original.trim());
+
+      setStatus('loading', `Đang dịch ${texts.length} đoạn văn...`, true);
+
+      // Batch: 40 texts per request
+      const batches = chunk(texts, 40);
+      const results = [];
+
+      for (let i = 0; i < batches.length; i++) {
+        setStatus('loading', `Dịch batch ${i+1}/${batches.length}...`, true);
+        const translated = await translateTexts(batches[i], src, dest);
+        results.push(...translated);
+        if (i < batches.length - 1) await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Apply translations
+      originalTexts.forEach((item, idx) => {
+        if (results[idx] !== undefined) {
+          item.node.textContent = results[idx];
+        }
+      });
+
+      isTranslated = true;
+      const destName = destLang.options[destLang.selectedIndex].text.replace(/^[^\s]+\s/, '');
+      setStatus('success', `✅ Đã dịch sang ${destName} thành công!`);
+      restoreBtn.style.display = 'flex';
+
+    } catch (err) {
+      console.error('Translate error:', err);
+      setStatus('error', `❌ ${err.message || 'Lỗi không xác định. Vui lòng thử lại.'}`);
+      restoreOriginal();
+    } finally {
+      isLoading = false;
+      translateBtn.disabled = false;
+    }
+  });
+
+  // === Restore ===
+  function restoreOriginal() {
+    originalTexts.forEach(({ node, original }) => {
+      try { node.textContent = original; } catch(e) {}
+    });
+    originalTexts = [];
+    isTranslated = false;
+    restoreBtn.style.display = 'none';
+  }
+
+  restoreBtn.addEventListener('click', () => {
+    restoreOriginal();
+    setStatus('info', '🔄 Đã khôi phục nội dung gốc');
+  });
+
+})();
+</script>
+<!-- ========================================== --><!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cờ Vua — Môn Thể Thao Trí Tuệ</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1008;
+    --cream: #f5efe3;
+    --warm-white: #faf7f0;
+    --gold: #c8972e;
+    --gold-light: #e8c060;
+    --dark-brown: #2d1f0e;
+    --medium-brown: #5c3d1a;
+    --accent-red: #8b1a1a;
+    --light-tan: #e8d9c0;
+    --shadow: rgba(26,16,8,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* ── PROGRESS BAR ── */
+  #progress-bar {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--accent-red));
+    width: 0%; z-index: 9999;
+    transition: width 0.1s linear;
+  }
+
+  /* ── MASTHEAD ── */
+  .masthead {
+    background: var(--dark-brown);
+    color: var(--cream);
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    border-bottom: 2px solid var(--gold);
+  }
+  .masthead-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+  }
+  .masthead-nav { display: flex; gap: 28px; }
+  .masthead-nav a {
+    color: var(--light-tan);
+    text-decoration: none;
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .masthead-nav a:hover { color: var(--gold-light); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--dark-brown);
+  }
+  .hero-chess-bg {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    opacity: 0.07;
+    pointer-events: none;
+  }
+  .hero-chess-bg div:nth-child(odd) { background: var(--gold); }
+  .hero-chess-bg div:nth-child(even) { background: transparent; }
+
+  .hero-inner {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 60px 40px;
+    max-width: 900px;
+  }
+  .hero-category {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.2s forwards;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    font-weight: 900;
+    color: var(--cream);
+    line-height: 0.95;
+    margin-bottom: 30px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s forwards;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+  .hero-subtitle {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.35rem;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--light-tan);
+    max-width: 600px;
+    margin: 0 auto 50px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s forwards;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.8s forwards;
+  }
+  .hero-meta-item {
+    text-align: center;
+  }
+  .hero-meta-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+  }
+  .hero-meta-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--light-tan);
+    opacity: 0.7;
+  }
+  .hero-divider {
+    width: 1px; height: 60px;
+    background: var(--medium-brown);
+  }
+  .hero-scroll-hint {
+    position: absolute;
+    bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+    color: var(--gold); opacity: 0.6;
+    font-size: 0.7rem; letter-spacing: 0.15em;
+    text-transform: uppercase;
+    animation: bounce 2s infinite;
+  }
+  .hero-scroll-hint span { font-size: 1.4rem; }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .article-wrap {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 60px;
+    padding: 80px 0;
+  }
+  .main-col { min-width: 0; }
+  .sidebar { min-width: 0; }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 80px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s, transform 0.7s;
+  }
+  .section.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .section-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.3;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--dark-brown);
+    margin-bottom: 28px;
+  }
+  p { margin-bottom: 1.4em; }
+
+  /* ── DROPCAP ── */
+  .dropcap::first-letter {
+    font-family: 'Playfair Display', serif;
+    font-size: 5.5rem;
+    font-weight: 900;
+    float: left;
+    line-height: 0.8;
+    margin: 6px 12px 0 0;
+    color: var(--gold);
+  }
+
+  /* ── PULL QUOTE ── */
+  .pull-quote {
+    border-left: 5px solid var(--gold);
+    padding: 20px 30px;
+    margin: 40px 0;
+    background: linear-gradient(135deg, rgba(200,151,46,0.07), transparent);
+  }
+  .pull-quote p {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--dark-brown);
+    margin: 0;
+  }
+  .pull-quote cite {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--medium-brown);
+  }
+
+  /* ── CHESSBOARD ── */
+  .board-section {
+    background: var(--dark-brown);
+    color: var(--cream);
+    padding: 70px 0;
+    margin: 60px 0;
+  }
+  .board-section .section-title { color: var(--gold-light); }
+  .board-section .section-label { color: var(--gold); }
+  .board-section p { color: var(--light-tan); }
+
+  .chess-board-demo {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    width: 100%;
+    max-width: 420px;
+    margin: 30px auto;
+    border: 3px solid var(--gold);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--medium-brown);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .chess-square {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 3.5vw, 1.8rem);
+    cursor: default;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .chess-square.light { background: #f0d9b5; }
+  .chess-square.dark { background: #b58863; }
+  .chess-square:hover { transform: scale(1.12); z-index: 1; }
+  .board-labels {
+    display: flex;
+    justify-content: space-around;
+    max-width: 420px;
+    margin: 6px auto 0;
+    padding: 0 4px;
+  }
+  .board-labels span {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--gold);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── PIECES GRID ── */
+  .pieces-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+  }
+  .piece-card {
+    background: var(--warm-white);
+    border: 1px solid var(--light-tan);
+    border-top: 3px solid var(--gold);
+    padding: 22px 18px;
+    border-radius: 2px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .piece-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px var(--shadow);
+  }
+  .piece-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+  .piece-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--dark-brown);
+    margin-bottom: 5px;
+  }
+  .piece-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .piece-desc {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--medium-brown);
+    margin: 0;
+  }
+
+  /* ── RULES TABLE ── */
+  .rules-list {
+    list-style: none;
+    counter-reset: rule;
+    margin-top: 24px;
+  }
+  .rules-list li {
+    counter-increment: rule;
+    display: flex;
+    gap: 20px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--light-tan);
+    align-items: flex-start;
+  }
+  .rules-list li::before {
+    content: counter(rule, decimal-leading-zero);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    color: var(--gold);
+    min-width: 40px;
+    line-height: 1;
+    margin-top: 4px;
+  }
+  .rule-content strong {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--dark-brown);
+    margin-bottom: 4px;
+  }
+  .rule-content p { margin: 0; font-size: 0.92rem; color: #4a3520; }
+
+  /* ── PLAYERS ── */
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+    margin-top: 30px;
+  }
+  .player-card {
+    background: var(--warm-white);
+    border: 1px solid var(--light-tan);
+    padding: 24px;
+    border-radius: 2px;
+    display: flex; gap: 18px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .player-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--gold);
+  }
+  .player-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px var(--shadow);
+  }
+  .player-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--dark-brown);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem;
+    flex-shrink: 0;
+    border: 2px solid var(--gold);
+  }
+  .player-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--dark-brown);
+    margin-bottom: 2px;
+  }
+  .player-country {
+    font-size: 0.78rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .player-bio {
+    font-size: 0.87rem;
+    color: #4a3520;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .player-elo {
+    position: absolute; top: 14px; right: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.95rem;
+    color: var(--medium-brown);
+    opacity: 0.5;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+    margin-top: 30px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 6px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 36px;
+    padding-left: 24px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute; left: -30px; top: 6px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--cream);
+    box-shadow: 0 0 0 2px var(--gold);
+  }
+  .timeline-year {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .timeline-event strong {
+    font-family: 'Playfair Display', serif;
+    color: var(--dark-brown);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .timeline-event p { font-size: 0.92rem; color: #4a3520; margin: 0; }
+
+  /* ── SIDEBAR ── */
+  .sidebar-widget {
+    background: var(--warm-white);
+    border: 1px solid var(--light-tan);
+    padding: 28px;
+    margin-bottom: 36px;
+    border-radius: 2px;
+    position: sticky;
+    top: 80px;
+  }
+  .sidebar-widget-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    color: var(--dark-brown);
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    padding: 7px 0;
+    border-bottom: 1px solid var(--light-tan);
+  }
+  .toc-list a {
+    text-decoration: none;
+    color: var(--medium-brown);
+    font-size: 0.88rem;
+    transition: color 0.2s;
+    display: flex; gap: 10px;
+    align-items: center;
+  }
+  .toc-list a:hover { color: var(--gold); }
+  .toc-num {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--gold);
+    font-size: 0.95rem;
+    min-width: 22px;
+  }
+
+  .fact-box {
+    background: var(--dark-brown);
+    color: var(--cream);
+    padding: 28px;
+    margin-top: 20px;
+  }
+  .fact-box .sidebar-widget-title { color: var(--gold-light); border-color: var(--gold); }
+  .fact-item {
+    display: flex; gap: 12px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+    color: var(--light-tan);
+  }
+  .fact-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  /* ── OPENING SECTION ── */
+  .openings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 24px;
+  }
+  .opening-card {
+    background: var(--warm-white);
+    border: 1px solid var(--light-tan);
+    padding: 20px;
+    border-radius: 2px;
+    transition: transform 0.2s;
+  }
+  .opening-card:hover { transform: translateY(-3px); }
+  .opening-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--dark-brown);
+    margin-bottom: 4px;
+  }
+  .opening-moves {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .opening-desc { font-size: 0.88rem; color: #4a3520; margin: 0; }
+
+  /* ── BENEFITS ── */
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 28px;
+  }
+  .benefit-card {
+    background: linear-gradient(135deg, var(--dark-brown), var(--medium-brown));
+    color: var(--cream);
+    padding: 28px 22px;
+    border-radius: 2px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .benefit-card:hover { transform: translateY(-4px); }
+  .benefit-icon { font-size: 2.2rem; display: block; margin-bottom: 12px; }
+  .benefit-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--gold-light);
+    margin-bottom: 8px;
+  }
+  .benefit-desc { font-size: 0.88rem; color: var(--light-tan); line-height: 1.6; margin: 0; }
+
+  /* ── INTERACTIVE ── */
+  .interactive-game {
+    background: var(--warm-white);
+    border: 2px solid var(--light-tan);
+    padding: 36px;
+    margin-top: 30px;
+    text-align: center;
+  }
+  .game-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--dark-brown);
+    margin-bottom: 8px;
+  }
+  .game-subtitle {
+    color: var(--medium-brown);
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+  }
+  .mini-board {
+    display: inline-grid;
+    grid-template-columns: repeat(8, 48px);
+    grid-template-rows: repeat(8, 48px);
+    border: 3px solid var(--dark-brown);
+    margin: 0 auto 20px;
+    cursor: pointer;
+  }
+  .mini-sq {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    transition: background 0.1s;
+    user-select: none;
+  }
+  .mini-sq.light { background: #f0d9b5; }
+  .mini-sq.dark { background: #b58863; }
+  .mini-sq.selected { background: #8ca2c0 !important; }
+  .mini-sq.possible-move { position: relative; }
+  .mini-sq.possible-move::after {
+    content: '';
+    width: 14px; height: 14px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 50%;
+    position: absolute;
+  }
+  .mini-sq.possible-move.has-piece::after {
+    width: 100%; height: 100%;
+    background: transparent;
+    border-radius: 0;
+    border: 3px solid rgba(0,0,0,0.3);
+  }
+  .game-status {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: var(--medium-brown);
+    font-size: 1rem;
+    min-height: 28px;
+  }
+  .game-btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 28px;
+    background: var(--dark-brown);
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 1px;
+  }
+  .game-btn:hover { background: var(--medium-brown); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark-brown);
+    color: var(--light-tan);
+    padding: 60px 0 30px;
+    margin-top: 80px;
+  }
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-style: italic;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .footer-tagline {
+    font-size: 0.9rem;
+    color: var(--medium-brown);
+    margin-bottom: 40px;
+  }
+  .footer-divider {
+    border: none;
+    border-top: 1px solid #3a2a18;
+    margin: 30px 0;
+  }
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--medium-brown);
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(8px); }
+  }
+
+  /* ── DIVIDER ── */
+  .ornamental-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 50px 0;
+    color: var(--gold);
+    opacity: 0.5;
+  }
+  .ornamental-divider::before,
+  .ornamental-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: currentColor;
+  }
+  .ornamental-divider span { font-size: 1.2rem; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .article-wrap { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .pieces-grid, .openings-grid, .benefits-grid { grid-template-columns: repeat(2, 1fr); }
+    .players-grid { grid-template-columns: 1fr; }
+    .masthead-nav { display: none; }
+  }
+  @media (max-width: 600px) {
+    .pieces-grid, .benefits-grid { grid-template-columns: 1fr; }
+    .mini-board { grid-template-columns: repeat(8, 38px); grid-template-rows: repeat(8, 38px); }
+    .mini-sq { width: 38px; height: 38px; font-size: 1.1rem; }
+    .container { padding: 0 20px; }
+    .hero-meta { flex-wrap: wrap; gap: 20px; }
+    .hero-divider { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-title">♟ Cờ Vua Việt Nam</div>
+  <nav class="masthead-nav">
+    <a href="#lich-su">Lịch Sử</a>
+    <a href="#quan-co">Quân Cờ</a>
+    <a href="#cach-choi">Cách Chơi</a>
+    <a href="#ky-thu">Kỳ Thủ</a>
+    <a href="#loi-ich">Lợi Ích</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-chess-bg" id="hero-bg"></div>
+  <div class="hero-inner">
+    <div class="hero-category">Thể Thao Trí Tuệ · Bộ Môn Huyền Thoại</div>
+    <h1 class="hero-title"><em>Cờ</em><br>Vua</h1>
+    <p class="hero-subtitle">Trò chơi chiến lược cổ xưa nhất thế giới — nơi mỗi nước đi là một quyết định, mỗi ván cờ là một cuộc đời.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <span class="hero-meta-number">1500+</span>
+        <span class="hero-meta-label">Năm Lịch Sử</span>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-number">600M</span>
+        <span class="hero-meta-label">Người Chơi</span>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-number">32</span>
+        <span class="hero-meta-label">Quân Cờ</span>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-number">64</span>
+        <span class="hero-meta-label">Ô Bàn Cờ</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>↓</span>
+    <small>Cuộn xuống</small>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="article-wrap">
+
+    <!-- MAIN COLUMN -->
+    <main class="main-col">
+
+      <!-- LỊCH SỬ -->
+      <section class="section" id="lich-su">
+        <div class="section-label">01 · Nguồn Gốc</div>
+        <h2 class="section-title">Lịch Sử Ra Đời</h2>
+        <p class="dropcap">Cờ vua (Chess) là một trong những trò chơi trí tuệ lâu đời và nổi tiếng nhất thế giới, với lịch sử trải dài hơn 1.500 năm. Nguồn gốc của cờ vua bắt đầu từ Ấn Độ cổ đại, vào khoảng thế kỷ VI sau Công nguyên, với tên gọi ban đầu là <em>Chaturanga</em> — tiếng Phạn có nghĩa là "bốn bộ phận" (tượng trưng cho bốn binh chủng của quân đội Ấn Độ: bộ binh, kỵ binh, chiến xa và voi chiến).</p>
+        <p>Từ Ấn Độ, Chaturanga du nhập vào Ba Tư (Iran ngày nay) và được gọi là <em>Chatrang</em>, sau đó tiếp tục phát triển thành <em>Shatranj</em> dưới thời Đế chế Sassanid. Người Ba Tư là những người đầu tiên viết tài liệu về cờ, và từ "checkmate" (chiếu tướng) bắt nguồn từ tiếng Ba Tư <em>"Shāh māt"</em> nghĩa là "Nhà vua đã chết".</p>
+
+        <div class="pull-quote">
+          <p>"Chess is the art of analysis."</p>
+          <cite>— Mikhail Botvinnik, Cựu Vô địch Thế giới</cite>
+        </div>
+
+        <p>Sau khi người Hồi giáo chinh phục Ba Tư vào thế kỷ VII, cờ lan rộng khắp thế giới Ả Rập rồi truyền vào châu Âu qua hai con đường: qua Tây Ban Nha (từ người Moor) và qua Italia. Đến thế kỷ X–XI, cờ đã phổ biến khắp châu Âu và bắt đầu hình thành dạng hiện đại.</p>
+        <p>Cuộc cách mạng lớn nhất xảy ra vào cuối thế kỷ XV, khi luật chơi được cải cách đáng kể tại Tây Ban Nha và Ý: quân Hậu (Queen) trở nên mạnh mẽ nhất bàn cờ, quân Tịnh (Bishop) có thể di chuyển đường chéo không giới hạn, và con tốt được phép đi hai ô trong lượt đầu. Những thay đổi này đã biến cờ từ một trò chơi chậm rãi thành cuộc chiến đấu năng động, kịch tính.</p>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">~600 SCN</div>
+            <div class="timeline-event">
+              <strong>Chaturanga — Ấn Độ</strong>
+              <p>Tổ tiên xa nhất của cờ vua ra đời tại lưu vực sông Ấn, mô phỏng trận chiến bốn binh chủng.</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">~650 SCN</div>
+            <div class="timeline-event">
+              <strong>Shatranj — Ba Tư</strong>
+              <p>Trò chơi du nhập Ba Tư, bộ luật được viết lại và trở thành môn nghệ thuật hoàng gia.</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1000–1200</div>
+            <div class="timeline-event">
+              <strong>Cờ vua châu Âu</strong>
+              <p>Lan rộng sang châu Âu qua Tây Ban Nha và Sicilia, trở thành trò chơi của quý tộc và hiệp sĩ.</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1475–1500</div>
+            <div class="timeline-event">
+              <strong>Cải cách luật lớn</strong>
+              <p>Quân Hậu được tăng sức mạnh vượt trội, tạo ra cờ vua hiện đại như ta biết ngày nay.</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1886</div>
+            <div class="timeline-event">
+              <strong>Giải Vô địch Thế giới đầu tiên</strong>
+              <p>Wilhelm Steinitz đánh bại Johannes Zukertort, trở thành Nhà vô địch Thế giới đầu tiên trong lịch sử.</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1924</div>
+            <div class="timeline-event">
+              <strong>FIDE thành lập</strong>
+              <p>Liên đoàn Cờ vua Quốc tế (FIDE) được thành lập tại Paris, quản lý cờ vua toàn cầu cho đến nay.</p>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">1997</div>
+            <div class="timeline-event">
+              <strong>Deep Blue đánh bại Kasparov</strong>
+              <p>Máy tính IBM Deep Blue lần đầu tiên đánh bại Nhà vô địch Thế giới Garry Kasparov trong trận đấu chính thức.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="ornamental-divider"><span>♟</span></div>
+
+      <!-- BÀN CỜ -->
+      <section class="section" id="ban-co">
+        <div class="section-label">02 · Trang Bị</div>
+        <h2 class="section-title">Bàn Cờ & Cách Sắp Xếp</h2>
+        <p>Bàn cờ vua là một hình vuông chia thành <strong>64 ô (8×8)</strong>, xen kẽ màu sáng và tối. Các hàng ngang được gọi là <em>rank</em> (đánh số 1–8 từ phía Trắng), còn các cột dọc gọi là <em>file</em> (ký hiệu a–h từ trái sang phải). Mỗi ô được xác định bởi tọa độ ghép lại, ví dụ: e4, d5, f6.</p>
+        <p>Khi xếp bàn cờ, phải đặt sao cho góc dưới bên phải mỗi bên là ô sáng màu. Câu ghi nhớ trong tiếng Anh: <em>"Light on right"</em>.</p>
+      </section>
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-widget">
+        <div class="sidebar-widget-title">Mục Lục</div>
+        <ul class="toc-list">
+          <li><a href="#lich-su"><span class="toc-num">01</span>Lịch Sử Ra Đời</a></li>
+          <li><a href="#ban-co"><span class="toc-num">02</span>Bàn Cờ & Xếp Quân</a></li>
+          <li><a href="#quan-co"><span class="toc-num">03</span>Các Quân Cờ</a></li>
+          <li><a href="#cach-choi"><span class="toc-num">04</span>Cách Chơi & Luật</a></li>
+          <li><a href="#khai-cuoc"><span class="toc-num">05</span>Khai Cuộc Nổi Tiếng</a></li>
+          <li><a href="#ky-thu"><span class="toc-num">06</span>Kỳ Thủ Huyền Thoại</a></li>
+          <li><a href="#loi-ich"><span class="toc-num">07</span>Lợi Ích Sức Khỏe</a></li>
+          <li><a href="#thu-choi"><span class="toc-num">08</span>Thử Chơi Ngay</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-widget fact-box">
+        <div class="sidebar-widget-title">Sự Thật Thú Vị</div>
+        <div class="fact-item"><span class="fact-icon">♟</span>Số lượng ván cờ khả thi nhiều hơn số nguyên tử trong vũ trụ quan sát được.</div>
+        <div class="fact-item"><span class="fact-icon">♛</span>Quân Hậu là quân mạnh nhất, trị giá khoảng 9 điểm.</div>
+        <div class="fact-item"><span class="fact-icon">⏱</span>Ván cờ dài nhất trong lịch sử kéo dài 269 nước đi.</div>
+        <div class="fact-item"><span class="fact-icon">🧠</span>Chơi cờ vua làm tăng chỉ số IQ theo nghiên cứu khoa học.</div>
+        <div class="fact-item"><span class="fact-icon">🌍</span>Hơn 600 triệu người chơi cờ thường xuyên trên toàn thế giới.</div>
+      </div>
+    </aside>
+
+  </div><!-- end article-wrap -->
+</div><!-- end container -->
+
+<!-- CHESSBOARD SECTION (FULL WIDTH) -->
+<section class="board-section" id="quan-co">
+  <div class="container">
+    <div class="section-label" style="color:var(--gold);">03 · Quân Cờ</div>
+    <h2 class="section-title" style="color:var(--gold-light);">Ý Nghĩa Từng Quân Cờ</h2>
+    <p style="color:var(--light-tan); max-width:680px;">Mỗi bên trong cờ vua có 16 quân, đại diện cho một đội quân phong kiến hoàn chỉnh. Mỗi quân có chức năng, sức mạnh và ý nghĩa biểu tượng riêng biệt.</p>
+
+    <!-- Demo board -->
+    <div class="chess-board-demo" id="demo-board"></div>
+    <div class="board-labels">
+      <span>a</span><span>b</span><span>c</span><span>d</span>
+      <span>e</span><span>f</span><span>g</span><span>h</span>
+    </div>
+
+    <div class="pieces-grid" style="margin-top:50px;">
+      <div class="piece-card">
+        <span class="piece-icon">♔</span>
+        <div class="piece-name">Vua (King)</div>
+        <div class="piece-value">Vô giá · Không thể mất</div>
+        <p class="piece-desc">Quân quan trọng nhất. Di chuyển 1 ô theo mọi hướng. Bảo vệ Vua là mục tiêu cốt lõi. Khi bị "chiếu hết" (checkmate), trận đấu kết thúc.</p>
+      </div>
+      <div class="piece-card">
+        <span class="piece-icon">♛</span>
+        <div class="piece-name">Hậu (Queen)</div>
+        <div class="piece-value">9 Điểm · Mạnh nhất</div>
+        <p class="piece-desc">Quân mạnh nhất bàn cờ, tượng trưng cho Hoàng hậu. Có thể di chuyển bất kỳ số ô nào theo đường thẳng hoặc đường chéo — kết hợp sức mạnh Xe và Tịnh.</p>
+      </div>
+      <div class="piece-card">
+        <span class="piece-icon">♜</span>
+        <div class="piece-name">Xe (Rook)</div>
+        <div class="piece-value">5 Điểm · Cột & Hàng</div>
+        <p class="piece-desc">Tượng trưng xe chiến tháp cao. Di chuyển theo hàng ngang và cột dọc không giới hạn. Đặc biệt mạnh khi hai Xe phối hợp hoặc chiếm cột mở.</p>
+      </div>
+      <div class="piece-card">
+        <span class="piece-icon">♝</span>
+        <div class="piece-name">Tịnh/Tượng (Bishop)</div>
+        <div class="piece-value">3 Điểm · Đường Chéo</div>
+        <p class="piece-desc">Di chuyển theo đường chéo không giới hạn. Mỗi bên có hai Tịnh — một trên ô sáng, một trên ô tối. Rất hiệu quả khi bàn cờ mở và đường chéo thông thoáng.</p>
+      </div>
+      <div class="piece-card">
+        <span class="piece-icon">♞</span>
+        <div class="piece-name">Mã (Knight)</div>
+        <div class="piece-value">3 Điểm · Hình Chữ L</div>
+        <p class="piece-desc">Quân duy nhất có thể nhảy qua quân khác. Di chuyển theo hình chữ L: 2 ô + 1 ô vuông góc. Đặc biệt nguy hiểm ở trung tâm và trong thế trận chật hẹp.</p>
+      </div>
+      <div class="piece-card">
+        <span class="piece-icon">♟</span>
+        <div class="piece-name">Tốt (Pawn)</div>
+        <div class="piece-value">1 Điểm · Linh Hồn</div>
+        <p class="piece-desc">Quân yếu nhất nhưng linh hồn của chiến lược. Tiến thẳng 1 ô (hoặc 2 ô đầu tiên), ăn chéo. Khi đến hàng cuối, Tốt được phong cấp thành bất kỳ quân nào (thường là Hậu).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CÁCH CHƠI -->
+<div class="container">
+  <section class="section" id="cach-choi" style="margin-top:80px;">
+    <div class="section-label">04 · Luật Chơi</div>
+    <h2 class="section-title">Cách Chơi & Luật Cơ Bản</h2>
+    <p>Cờ vua là cuộc đối đầu giữa hai người chơi với quân Trắng và quân Đen. Người chơi quân Trắng đi trước. Mục tiêu là <strong>chiếu hết (checkmate)</strong> Vua đối phương — đặt Vua vào thế bị tấn công mà không có nước đi nào thoát được.</p>
+
+    <ul class="rules-list">
+      <li>
+        <div class="rule-content">
+          <strong>Chiếu (Check)</strong>
+          <p>Khi Vua bị đe dọa tấn công bởi một quân đối phương. Bên bị chiếu bắt buộc phải thoát khỏi trạng thái này ngay lập tức bằng cách: di chuyển Vua, chặn đường tấn công, hoặc ăn quân đang chiếu.</p>
+        </div>
+      </li>
+      <li>
+        <div class="rule-content">
+          <strong>Chiếu Hết (Checkmate)</strong>
+          <p>Khi Vua bị chiếu và không còn nước đi hợp lệ nào để thoát. Bên bị chiếu hết thua cuộc. Đây là mục tiêu tối thượng của mỗi ván cờ.</p>
+        </div>
+      </li>
+      <li>
+        <div class="rule-content">
+          <strong>Hòa Cờ (Draw)</strong>
+          <p>Xảy ra trong các trường hợp: Stalemate (một bên không bị chiếu nhưng không có nước đi hợp lệ), Lặp lại thế trận 3 lần, 50 nước không ăn quân/không đi Tốt, hoặc hai bên thỏa thuận hòa.</p>
+        </div>
+      </li>
+      <li>
+        <div class="rule-content">
+          <strong>Nhập Thành (Castling)</strong>
+          <p>Nước đi đặc biệt giữa Vua và Xe: Vua dịch 2 ô về phía Xe, Xe nhảy qua Vua. Điều kiện: Vua và Xe chưa di chuyển, không có quân cản, Vua không đang bị chiếu và không đi qua ô bị tấn công.</p>
+        </div>
+      </li>
+      <li>
+        <div class="rule-content">
+          <strong>Bắt Tốt Qua Đường (En Passant)</strong>
+          <p>Nếu Tốt đối phương vừa di chuyển 2 ô và đứng cạnh Tốt của mình, bạn có quyền ăn Tốt đó như thể nó chỉ đi 1 ô. Quyền này chỉ có ngay lượt tiếp theo.</p>
+        </div>
+      </li>
+      <li>
+        <div class="rule-content">
+          <strong>Phong Cấp Tốt (Promotion)</strong>
+          <p>Khi Tốt tiến đến hàng cuối cùng (hàng 8 với Trắng, hàng 1 với Đen), nó được phong cấp thành Hậu, Xe, Tịnh hoặc Mã. Phong thành Hậu (underpromote thành Mã cũng rất phổ biến trong chiến thuật).</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <div class="ornamental-divider"><span>♞</span></div>
+
+  <!-- KHAI CUỘC -->
+  <section class="section" id="khai-cuoc">
+    <div class="section-label">05 · Chiến Thuật</div>
+    <h2 class="section-title">Những Khai Cuộc Nổi Tiếng</h2>
+    <p>Khai cuộc (Opening) là giai đoạn đầu của ván cờ, nơi người chơi xây dựng thế trận và kiểm soát trung tâm. Có hàng trăm khai cuộc được đặt tên và nghiên cứu kỹ lưỡng qua nhiều thế kỷ.</p>
+
+    <div class="openings-grid">
+      <div class="opening-card">
+        <div class="opening-name">Ruy López (Tây Ban Nha)</div>
+        <div class="opening-moves">1.e4 e5 2.♞f3 ♞c6 3.♝b5</div>
+        <p class="opening-desc">Khai cuộc cổ điển nhất, gần 500 năm tuổi. Trắng tấn công Mã bảo vệ Tốt e5, xây dựng thế trận vững chắc với ưu thế lâu dài.</p>
+      </div>
+      <div class="opening-card">
+        <div class="opening-name">Sicilian Defence</div>
+        <div class="opening-moves">1.e4 c5</div>
+        <p class="opening-desc">Khai cuộc phản công phổ biến nhất ở cấp độ cao. Đen không đáp lại đối xứng, tạo ra thế cờ không cân bằng và nhiều cơ hội phản công.</p>
+      </div>
+      <div class="opening-card">
+        <div class="opening-name">Queen's Gambit</div>
+        <div class="opening-moves">1.d4 d5 2.c4</div>
+        <p class="opening-desc">Khai cuộc kinh điển của Trắng với 1.d4, dâng tốt c4 để giành kiểm soát trung tâm. Được phổ biến lại qua loạt phim "The Queen's Gambit".</p>
+      </div>
+      <div class="opening-card">
+        <div class="opening-name">King's Indian Defence</div>
+        <div class="opening-moves">1.d4 ♞f6 2.c4 g6</div>
+        <p class="opening-desc">Hệ thống phòng thủ năng động của Đen. Nhường trung tâm tạm thời, sau đó phản công quyết liệt với e5 hoặc c5. Được Kasparov, Fischer ưa chuộng.</p>
+      </div>
+      <div class="opening-card">
+        <div class="opening-name">Caro-Kann Defence</div>
+        <div class="opening-moves">1.e4 c6</div>
+        <p class="opening-desc">Phòng thủ vững chắc và thực dụng. Đen xây dựng thế cờ ít rủi ro, rất phù hợp với phong cách chơi vị trí và kỹ thuật cuối cờ.</p>
+      </div>
+      <div class="opening-card">
+        <div class="opening-name">Catalan Opening</div>
+        <div class="opening-moves">1.d4 ♞f6 2.c4 e6 3.g3</div>
+        <p class="opening-desc">Khai cuộc thanh lịch và hiện đại. Trắng phát triển Tượng về g2 kiểm soát đường chéo dài, tạo áp lực vào cánh Hậu đối phương một cách tinh tế.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="ornamental-divider"><span>♛</span></div>
+
+  <!-- KỲ THỦ NỔI TIẾNG -->
+  <section class="section" id="ky-thu">
+    <div class="section-label">06 · Huyền Thoại</div>
+    <h2 class="section-title">Những Kỳ Thủ Vĩ Đại</h2>
+    <p>Lịch sử cờ vua gắn liền với những thiên tài lỗi lạc — những người không chỉ thống trị bàn cờ mà còn thay đổi cách nhân loại nhìn nhận trí tuệ và nghệ thuật chiến lược.</p>
+
+    <div class="players-grid">
+      <div class="player-card">
+        <div class="player-avatar">♟</div>
+        <div>
+          <div class="player-name">Garry Kasparov</div>
+          <div class="player-country">🇷🇺 Nga · Vô địch 1985–2000</div>
+          <p class="player-bio">Kỳ thủ vĩ đại nhất mọi thời đại theo nhiều đánh giá. Trở thành Vô địch Thế giới ở tuổi 22, giữ danh hiệu 15 năm liên tiếp. Nổi tiếng với phong cách tấn công hung hãn và tư duy chiến lược sâu sắc.</p>
+        </div>
+        <div class="player-elo">ELO 2851</div>
+      </div>
+      <div class="player-card">
+        <div class="player-avatar">♛</div>
+        <div>
+          <div class="player-name">Magnus Carlsen</div>
+          <div class="player-country">🇳🇴 Na Uy · Vô địch 2013–2023</div>
+          <p class="player-bio">Kỳ thủ có chỉ số ELO cao nhất lịch sử (2882). Được mệnh danh là "Mozart của cờ vua". Phong cách đa dạng, có thể chiến thắng từ bất kỳ loại thế cờ nào kể cả khi tưởng chừng hòa.</p>
+        </div>
+        <div class="player-elo">ELO 2882</div>
+      </div>
+      <div class="player-card">
+        <div class="player-avatar">♜</div>
+        <div>
+          <div class="player-name">Bobby Fischer</div>
+          <div class="player-country">🇺🇸 Mỹ · Vô địch 1972–1975</div>
+          <p class="player-bio">Thiên tài cờ vua người Mỹ duy nhất giành Vô địch Thế giới. Ván đấu năm 1972 với Spassky tại Reykjavik được gọi là "Trận đấu của thế kỷ". Tự học cờ từ 6 tuổi, ELO vượt trội hơn đối thủ cùng thời hàng chục điểm.</p>
+        </div>
+        <div class="player-elo">ELO 2785</div>
+      </div>
+      <div class="player-card">
+        <div class="player-avatar">♞</div>
+        <div>
+          <div class="player-name">Anatoly Karpov</div>
+          <div class="player-country">🇷🇺 Nga · Vô địch 1975–1985</div>
+          <p class="player-bio">Bậc thầy của cờ vua vị trí. Không tấn công trực tiếp mà siết dần không gian và khiến đối thủ ngạt thở từng nước. Giành hơn 160 giải đấu quốc tế trong sự nghiệp.</p>
+        </div>
+        <div class="player-elo">ELO 2780</div>
+      </div>
+      <div class="player-card">
+        <div class="player-avatar">♝</div>
+        <div>
+          <div class="player-name">Viswanathan Anand</div>
+          <div class="player-country">🇮🇳 Ấn Độ · Vô địch 2000–2013</div>
+          <p class="player-bio">"Hổ Chennai" — kỳ thủ nhanh nhất thế giới, nổi tiếng với tốc độ tính toán kinh dị. Vô địch Thế giới 5 lần, là biểu tượng của cờ vua Ấn Độ và châu Á.</p>
+        </div>
+        <div class="player-elo">ELO 2817</div>
+      </div>
+      <div class="player-card">
+        <div class="player-avatar">♚</div>
+        <div>
+          <div class="player-name">Fabiano Caruana</div>
+          <div class="player-country">🇺🇸 Mỹ-Ý · Á quân 2018</div>
+          <p class="player-bio">Thách thức Carlsen vào năm 2018 trong trận đấu gay cấn nhất thập kỷ. 12 ván cờ cổ điển đều hòa — kỳ tích chưa từng có trong lịch sử Vô địch Thế giới.</p>
+        </div>
+        <div class="player-elo">ELO 2820</div>
+      </div>
+      <div class="player-card">
+        <div class="player-avatar">♟</div>
+        <div>
+          <div class="player-name">Lê Quang Liêm</div>
+          <div class="player-country">🇻🇳 Việt Nam · Đại kiện tướng</div>
+          <p class="player-bio">Kỳ thủ Việt Nam đầu tiên đạt danh hiệu Đại kiện tướng quốc tế (Grandmaster). Đã từng đánh bại Carlsen và Kasparov tại các giải nhanh. Niềm tự hào của cờ vua Việt Nam.</p>
+        </div>
+        <div class="player-elo">ELO 2702</div>
+      </div>
+      <div class="player-card">
+        <div class="player-avatar">♛</div>
+        <div>
+          <div class="player-name">Judith Polgar</div>
+          <div class="player-country">🇭🇺 Hungary · Huyền thoại nữ</div>
+          <p class="player-bio">Kỳ thủ nữ vĩ đại nhất lịch sử. Đạt danh hiệu Grandmaster ở tuổi 15 tuổi 4 tháng 28 ngày — phá vỡ kỷ lục của Fischer. Từng đứng thứ 8 thế giới không phân biệt giới tính.</p>
+        </div>
+        <div class="player-elo">ELO 2735</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ornamental-divider"><span>♜</span></div>
+
+  <!-- LỢI ÍCH -->
+  <section class="section" id="loi-ich">
+    <div class="section-label">07 · Khoa Học & Sức Khỏe</div>
+    <h2 class="section-title">Lợi Ích Tuyệt Vời Của Cờ Vua</h2>
+    <p>Không chỉ là trò chơi giải trí, cờ vua đã được khoa học chứng minh mang lại nhiều lợi ích đáng kinh ngạc cho não bộ và sức khỏe tâm thần. Nghiên cứu từ nhiều đại học danh tiếng trên thế giới khẳng định rằng chơi cờ thường xuyên tạo ra những thay đổi tích cực có thể đo lường được.</p>
+
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <span class="benefit-icon">🧠</span>
+        <div class="benefit-title">Tăng Cường Trí Nhớ</div>
+        <p class="benefit-desc">Nghiên cứu tại Đức chứng minh chơi cờ vua kích thích cả hai bán cầu não, cải thiện đáng kể trí nhớ ngắn hạn và dài hạn.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon">🎯</span>
+        <div class="benefit-title">Tư Duy Chiến Lược</div>
+        <p class="benefit-desc">Rèn luyện khả năng lập kế hoạch nhiều bước, dự đoán hậu quả, và đưa ra quyết định trong điều kiện thiếu thông tin — kỹ năng quý giá trong mọi lĩnh vực.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon">⚡</span>
+        <div class="benefit-title">Tốc Độ Tư Duy</div>
+        <p class="benefit-desc">Cờ vua tốc độ (Blitz, Bullet) cực kỳ hiệu quả trong việc rèn luyện khả năng nhận thức nhanh và phản xạ tư duy dưới áp lực thời gian.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon">🛡️</span>
+        <div class="benefit-title">Chống Lão Hóa Não</div>
+        <p class="benefit-desc">Nhiều nghiên cứu cho thấy người lớn tuổi chơi cờ có nguy cơ mắc Alzheimer và Dementia thấp hơn đáng kể. Cờ vua là "thể dục não bộ" lý tưởng.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon">💪</span>
+        <div class="benefit-title">Rèn Tính Kiên Nhẫn</div>
+        <p class="benefit-desc">Mỗi ván cờ dạy người chơi kiên trì theo đuổi mục tiêu, chịu đựng áp lực và không bỏ cuộc ngay cả khi ở thế bất lợi — bài học sống quý giá.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon">🌟</span>
+        <div class="benefit-title">Sáng Tạo & IQ</div>
+        <p class="benefit-desc">Nghiên cứu tại Venezuela với 4.000 học sinh cho thấy chơi cờ 4 tháng làm tăng đáng kể chỉ số IQ. Cờ vua còn kích thích tư duy sáng tạo và giải quyết vấn đề độc đáo.</p>
+      </div>
+    </div>
+
+    <div class="pull-quote" style="margin-top:40px;">
+      <p>"Cờ vua không phải chỉ là trò chơi — đó là nghệ thuật, khoa học và thể thao trong một."</p>
+      <cite>— Grandmaster Savielly Tartakower</cite>
+    </div>
+  </section>
+
+  <div class="ornamental-divider"><span>♝</span></div>
+
+  <!-- INTERACTIVE GAME -->
+  <section class="section" id="thu-choi">
+    <div class="section-label">08 · Trải Nghiệm</div>
+    <h2 class="section-title">Thử Chơi Ngay</h2>
+    <p>Bàn cờ bên dưới cho phép bạn di chuyển các quân cờ. Click vào quân cờ để chọn (các ô xanh là nước đi khả thi), sau đó click vào ô đích để di chuyển. Đây là bàn cờ tương tác đơn giản để cảm nhận cách các quân di chuyển.</p>
+
+    <div class="interactive-game">
+      <div class="game-title">Bàn Cờ Tương Tác</div>
+      <div class="game-subtitle">Click quân cờ → Chọn ô di chuyển</div>
+      <div class="mini-board" id="mini-board"></div>
+      <div class="game-status" id="game-status">Lượt của Trắng — Hãy chọn một quân cờ</div>
+      <br>
+      <button class="game-btn" onclick="resetGame()">↺ Ván Mới</button>
+    </div>
+  </section>
+
+  <div class="ornamental-divider"><span>♚</span></div>
+
+  <!-- CỜ VUA Ở VIỆT NAM -->
+  <section class="section">
+    <div class="section-label">09 · Việt Nam</div>
+    <h2 class="section-title">Cờ Vua Tại Việt Nam</h2>
+    <p class="dropcap">Cờ vua du nhập vào Việt Nam từ đầu thế kỷ XX qua ảnh hưởng của người Pháp. Tuy nhiên, bộ môn này phát triển mạnh mẽ từ sau năm 1975, đặc biệt bùng nổ trong giai đoạn 1990–2000 khi Việt Nam hội nhập quốc tế trong thể thao.</p>
+    <p>Năm 2002, <strong>Lê Quang Liêm</strong> sinh ra tại TP. Hồ Chí Minh đã làm rạng danh cờ vua Việt Nam khi trở thành Đại kiện tướng quốc tế đầu tiên của nước nhà. Anh đã đánh bại nhiều tên tuổi lớn như Kasparov (giao hữu) và Magnus Carlsen tại các giải cờ nhanh quốc tế.</p>
+    <p>Liên đoàn Cờ vua Việt Nam (VNCF) hiện quản lý hàng trăm nghìn kỳ thủ trên toàn quốc. Cờ vua được đưa vào chương trình thể dục ngoại khóa tại nhiều trường học với mục tiêu phát triển trí tuệ cho học sinh từ sớm.</p>
+    <p>Các thành phố có phong trào cờ vua mạnh nhất bao gồm Hà Nội, TP. Hồ Chí Minh, Đà Nẵng, Hải Phòng và Cần Thơ. Giải cờ vua quốc gia và các giải trẻ được tổ chức hàng năm với sự tham dự của hàng nghìn kỳ thủ.</p>
+  </section>
+
+</div><!-- end container -->
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">♟ Cờ Vua</div>
+    <p class="footer-tagline">Môn thể thao trí tuệ của nhân loại — từ 1500 năm qua đến tương lai.</p>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>© 2025 · Bài viết về Cờ Vua · Tất cả nội dung mang tính giáo dục</span>
+      <span>♔ ♕ ♖ ♗ ♘ ♙</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.body.scrollHeight - window.innerHeight;
+  document.getElementById('progress-bar').style.width = (scrollTop / docHeight * 100) + '%';
+});
+
+// ── HERO BG ──
+const heroBg = document.getElementById('hero-bg');
+for (let r = 0; r < 8; r++) {
+  for (let c = 0; c < 8; c++) {
+    const d = document.createElement('div');
+    d.className = (r + c) % 2 === 0 ? 'light' : 'dark';
+    heroBg.appendChild(d);
+  }
+}
+
+// ── DEMO BOARD ──
+const initPieces = {
+  '0,0':'♜','0,1':'♞','0,2':'♝','0,3':'♛','0,4':'♚','0,5':'♝','0,6':'♞','0,7':'♜',
+  '1,0':'♟','1,1':'♟','1,2':'♟','1,3':'♟','1,4':'♟','1,5':'♟','1,6':'♟','1,7':'♟',
+  '6,0':'♙','6,1':'♙','6,2':'♙','6,3':'♙','6,4':'♙','6,5':'♙','6,6':'♙','6,7':'♙',
+  '7,0':'♖','7,1':'♘','7,2':'♗','7,3':'♕','7,4':'♔','7,5':'♗','7,6':'♘','7,7':'♖',
+};
+
+const demoBoard = document.getElementById('demo-board');
+for (let r = 0; r < 8; r++) {
+  for (let c = 0; c < 8; c++) {
+    const sq = document.createElement('div');
+    sq.className = 'chess-square ' + ((r+c)%2===0 ? 'light' : 'dark');
+    const piece = initPieces[`${r},${c}`];
+    if (piece) sq.textContent = piece;
+    demoBoard.appendChild(sq);
+  }
+}
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+// ── INTERACTIVE GAME ──
+const PIECES = {
+  wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',
+  bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'
+};
+
+let board, selected, turn, possibleMoves;
+
+function initBoard() {
+  board = Array(8).fill(null).map(() => Array(8).fill(null));
+  board[0] = ['bR','bN','bB','bQ','bK','bB','bN','bR'];
+  board[1] = Array(8).fill('bP');
+  board[6] = Array(8).fill('wP');
+  board[7] = ['wR','wN','wB','wQ','wK','wB','wN','wR'];
+  selected = null; turn = 'w'; possibleMoves = [];
+}
+
+function getMoves(r, c) {
+  const p = board[r][c]; if (!p) return [];
+  const color = p[0], type = p[1];
+  const moves = [];
+  const inBounds = (r,c) => r>=0&&r<8&&c>=0&&c<8;
+  const isEnemy = (r,c) => inBounds(r,c) && board[r][c] && board[r][c][0] !== color;
+  const isEmpty = (r,c) => inBounds(r,c) && !board[r][c];
+
+  const slide = (dirs) => {
+    dirs.forEach(([dr,dc]) => {
+      let nr=r+dr, nc=c+dc;
+      while (inBounds(nr,nc)) {
+        if (board[nr][nc]) { if (isEnemy(nr,nc)) moves.push([nr,nc]); break; }
+        moves.push([nr,nc]); nr+=dr; nc+=dc;
+      }
+    });
+  };
+
+  if (type==='P') {
+    const dir = color==='w' ? -1 : 1;
+    const startR = color==='w' ? 6 : 1;
+    if (isEmpty(r+dir,c)) {
+      moves.push([r+dir,c]);
+      if (r===startR && isEmpty(r+dir*2,c)) moves.push([r+dir*2,c]);
+    }
+    if (isEnemy(r+dir,c-1)) moves.push([r+dir,c-1]);
+    if (isEnemy(r+dir,c+1)) moves.push([r+dir,c+1]);
+  } else if (type==='N') {
+    [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc])=>{
+      if (inBounds(r+dr,c+dc) && !board[r+dr][c+dc]?.startsWith(color)) moves.push([r+dr,c+dc]);
+    });
+  } else if (type==='B') {
+    slide([[1,1],[1,-1],[-1,1],[-1,-1]]);
+  } else if (type==='R') {
+    slide([[1,0],[-1,0],[0,1],[0,-1]]);
+  } else if (type==='Q') {
+    slide([[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]);
+  } else if (type==='K') {
+    [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc])=>{
+      if (inBounds(r+dr,c+dc) && !board[r+dr][c+dc]?.startsWith(color)) moves.push([r+dr,c+dc]);
+    });
+  }
+  return moves;
+}
+
+function renderMiniBoard() {
+  const mb = document.getElementById('mini-board');
+  mb.innerHTML = '';
+  for (let r=0; r<8; r++) {
+    for (let c=0; c<8; c++) {
+      const sq = document.createElement('div');
+      sq.className = 'mini-sq ' + ((r+c)%2===0 ? 'light' : 'dark');
+      if (selected && selected[0]===r && selected[1]===c) sq.classList.add('selected');
+      const isPossible = possibleMoves.some(([pr,pc])=>pr===r&&pc===c);
+      if (isPossible) {
+        sq.classList.add('possible-move');
+        if (board[r][c]) sq.classList.add('has-piece');
+      }
+      if (board[r][c]) sq.textContent = PIECES[board[r][c]];
+      sq.addEventListener('click', () => handleClick(r, c));
+      mb.appendChild(sq);
+    }
+  }
+}
+
+function handleClick(r, c) {
+  const p = board[r][c];
+  const status = document.getElementById('game-status');
+
+  if (selected) {
+    const move = possibleMoves.find(([mr,mc])=>mr===r&&mc===c);
+    if (move) {
+      board[r][c] = board[selected[0]][selected[1]];
+      board[selected[0]][selected[1]] = null;
+      // Pawn promotion
+      if (board[r][c]==='wP' && r===0) board[r][c]='wQ';
+      if (board[r][c]==='bP' && r===7) board[r][c]='bQ';
+      turn = turn==='w' ? 'b' : 'w';
+      selected = null; possibleMoves = [];
+      status.textContent = `Lượt của ${turn==='w'?'Trắng':'Đen'} — Chọn quân cờ`;
+    } else if (p && p[0]===turn) {
+      selected = [r,c];
+      possibleMoves = getMoves(r,c);
+      status.textContent = `Đã chọn ${PIECES[p]} — Chọn ô di chuyển`;
+    } else {
+      selected = null; possibleMoves = [];
+      status.textContent = `Lượt của ${turn==='w'?'Trắng':'Đen'} — Chọn quân cờ`;
+    }
+  } else {
+    if (p && p[0]===turn) {
+      selected = [r,c];
+      possibleMoves = getMoves(r,c);
+      status.textContent = `Đã chọn ${PIECES[p]} tại ${String.fromCharCode(97+c)}${8-r} — Chọn ô di chuyển`;
+    }
+  }
+  renderMiniBoard();
+}
+
+function resetGame() {
+  initBoard();
+  renderMiniBoard();
+  document.getElementById('game-status').textContent = 'Ván mới! Lượt của Trắng — Hãy chọn một quân cờ';
+}
+
+initBoard();
+renderMiniBoard();
+</script>
+</body>
+</html>
